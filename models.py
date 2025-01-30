@@ -2,13 +2,38 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-# создаем асинхронную БД для отправки запроса в БД
-
+# создаем асинхронную БД для отправки запроса
 eng = create_async_engine(
     "sqlite+aiosqlite:///testdb.db"
 )
 # создание новой сессии для работы с бд
 new_session = async_sessionmaker(eng, expire_on_commit=False)
+
+
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
+
+
+class STaskAdd(BaseModel):
+    """
+    Модель для добавления новой задачи/таска
+    """
+    name: str
+    description: Optional[str] = None
+
+class STask(STaskAdd):
+    """
+    Модель для представления самой таски
+    """
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+class STaskId(BaseModel):
+    """
+    Модель для возвращения результата добавления таска
+    """
+    ok: bool = True
+    task_id: int
 
 
 class Model(DeclarativeBase):
@@ -19,7 +44,6 @@ class TaskOrm(Model):
     """задаем основные параметры"""
     __tablename__ = "tasks"
     id: Mapped[int] = mapped_column(primary_key=True)
-    #выдаем первичный ключ
     name: Mapped[str]
     descriprtion: Mapped[Optional[str]]
 

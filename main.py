@@ -1,27 +1,15 @@
-from asyncio import tasks
-from contextlib import asynccontextmanager
-from typing import Optional, Annotated
-from fastapi import FastAPI, Depends
-from pydantic import BaseModel
-
-#импортируем все модели
-
+from fastapi import FastAPI
+from models import create_tables, delete_tables
+from router import router as tasks_router
 from contextlib import asynccontextmanager
 #позволяет создавать контекст менеджер
-
-from sqlalchemy.testing.util import drop_all_tables
-
-from models import create_tables, delete_tables
-
-
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Жизненный цикл
-    :param app:
-    :return:
+    Удаляет таблицы перед запуском.
+    Создает таблицы перед началом работы.
+    Выполняет завершающие действия при выключении.
     """
     await delete_tables()
     print("База очищена")
@@ -31,41 +19,5 @@ async def lifespan(app: FastAPI):
     print("Выключение")
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(tasks_router)
 
-class STaskAdd(BaseModel):
-    name: str
-    description: Optional[str] = None
-
-class STask(STaskAdd):
-    id: int
-
-
-
-tasks = []
-
-@app.get("/tasks")
-async def add_tasks(
-    task: Annotated[STaskAdd, Depends(), ],
-):
-    tasks.append(task)
-    return {"ok": True}
-
-
-# @app.get("/tasks")
-# def get_tasks():
-#     task = Task(name="Сделай тест")
-#     return {"data": task}
-#
-# @app.get("/")
-# async def root():
-#     return {"message": "Hello World"}
-#
-#
-# @app.get("/hello/{name}")
-# async def say_hello(name: str):
-#     return {"message": f"Hello {name}"}
-#
-#
-# @app.get("/home")
-# def get_home():
-#     return "Hello World!"
